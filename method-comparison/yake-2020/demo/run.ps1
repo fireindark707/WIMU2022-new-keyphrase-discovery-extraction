@@ -1,0 +1,1 @@
+streamlit run streamlit_demo_yake.py
