@@ -21,7 +21,7 @@ def get_stopwords(file_loc):
 
 def get_df_line(df):
     for row in df.index:
-        yield tuple(re.sub(reg, " ", df[col][row]) for col in df.columns)
+        yield tuple(re.sub(reg, " ", df[col][row]) for col in df.columns) # title content
 
 def get_my_dict(dict_loc):
     for word in open(dict_loc, "r", encoding='utf-8'):
@@ -49,35 +49,8 @@ if __name__ == '__main__':
         predict["content"].append(text)
 
         # ketBert: take keyword after tokenization
-        text_tokens = jieba.cut(text)
-        # text_tokens = jieba.cut_for_search(text)
-        # text_tokens = set(list(jieba.cut_for_search(text)))
-
-        # for token1 in text_tokens.copy():
-        #     for token2 in text_tokens.copy():
-        #         if len(token1) <= len(token2):
-        #             continue
-        #         elif token2 in token1:
-        #             text_tokens.remove(token2)
-
-        text = " ".join(list(text_tokens))
+        text = " ".join(list(jieba.cut(text)))
         keywords = kb.extract_keywords(text, stop_words=stopwords, top_n=10, diversity=0.2, use_mmr=True)
-        # keywords = kb.extract_keywords(text, stop_words=stopwords, top_n=50, )
-
-        # keywords.sort()
-        # for k1 in keywords.copy():
-        #     for k2 in keywords.copy():
-        #         if len(k1[0]) <= len(k2[0]):
-        #             continue
-        #         elif k2[0] in k1[0]:
-        #             keywords.remove(k2)
-
-        # new_keywords = []
-        # for keyword in keywords:
-        #     new_keywords.append((keyword[1], keyword[0]))
-        # new_keywords.sort(reverse=True)
-
-        # predict["keywords"].append([keyword[1] for keyword in new_keywords[:10]])
         predict["keywords"].append([keyword[0] for keyword in keywords])
 
         succ_counter += 1
