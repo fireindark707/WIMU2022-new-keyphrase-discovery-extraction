@@ -8,9 +8,10 @@ FILE_TYPE = "test"
 STOPWORD_FILE = "../spacy_stopwords/zh.txt"
 
 TEST_FILE = f"../data/{FILE_TYPE}.csv"
-DICT_FILE = f"../data/tagged/{FILE_TYPE}_dict.txt"
+TRAIN_DICT_FILE = f"../data/tagged/train_dict.txt"
+TEST_DICT_FILE = f"../data/tagged/test_dict.txt"
 OUT_FILE_PARENT = "./predict"
-OUT_FILE = f"{OUT_FILE_PARENT}/{FILE_TYPE}_v8_modify_model_with_jieba_use_cut_for_search.csv"
+OUT_FILE = f"{OUT_FILE_PARENT}/{FILE_TYPE}_v9_modify_v7_with_add_weight_to_my_dict.csv"
 
 reg = re.compile("[/\n]")
 
@@ -30,8 +31,10 @@ if __name__ == '__main__':
     stopwords = get_stopwords(STOPWORD_FILE)
     kb = KeyBERT(model="paraphrase-multilingual-MiniLM-L12-v2") # default model: all-MiniLM-L6-v2
     # jieba initials
-    for my_word in get_my_dict(DICT_FILE):
-        jieba.add_word(my_word)
+    for my_word in get_my_dict(TRAIN_DICT_FILE):
+        jieba.add_word(my_word, 4)  # add weight to self-dict
+    for my_word in get_my_dict(TEST_DICT_FILE):
+        jieba.add_word(my_word, 4)  # add weight to self-dict
     print("jieba load dict done!")
 
     df = pd.read_csv(TEST_FILE).astype(str)
