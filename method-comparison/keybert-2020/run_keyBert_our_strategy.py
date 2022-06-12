@@ -1,46 +1,67 @@
-from keybert import KeyBERT # https://github.com/MaartenGr/KeyBERT
+from keybert import KeyBERT  # https://github.com/MaartenGr/KeyBERT
 import pandas as pd
 from pathlib import Path
 import re
 import jieba
+import json
+
 
 FILE_TYPE = "test"
 STOPWORD_FILE = "../spacy_stopwords/zh.txt"
 MY_KEYWORD_WEIGHT = 1.2
+REGEX_PATTERN = "[/\n]"
 
 TEST_FILE = f"../data/{FILE_TYPE}.csv"
-TRAIN_DICT_FILE = f"../data/tagged/train_dict.txt"
-TEST_DICT_FILE = f"../data/tagged/test_dict.txt"
+DICT_FILE = f"../data/tagged/my_dict.json"
 OUT_FILE_PARENT = "./predict"
 OUT_FILE = f"{OUT_FILE_PARENT}/{FILE_TYPE}_our_strategy.csv"
 
-reg = re.compile("[/\n]")
 
 def get_stopwords(file_loc):
-    stopwords = [word.lower().split('\n')[0] for word in open(file_loc, 'r', encoding='UTF-8')]
+    stopwords = [
+        word.lower().split("\n")[0] for word in open(file_loc, "r", encoding="UTF-8")
+    ]
     return stopwords
+
 
 def get_df_line(df):
     for row in df.index:
-        yield tuple(re.sub(reg, " ", df[col][row]) for col in df.columns) # title content
+        yield tuple(
+            re.sub(REGEX_PATTERN, " ", df[col][row]) for col in df.columns
+        )  # title content
+
 
 def get_my_dict(dict_loc):
-    for word in open(dict_loc, "r", encoding='utf-8'):
-        yield word.split('\n')[0] # now doesn't provide frequency & tag
+    for word in open(dict_loc, "r", encoding="utf-8"):
+        yield word.split("\n")[0]  # now doesn't provide frequency & tag
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     stopwords = get_stopwords(STOPWORD_FILE)
-    kb = KeyBERT(model="paraphrase-multilingual-MiniLM-L12-v2") # default model: all-MiniLM-L6-v2
+    # default model: all-MiniLM-L6-v2
+    kb = KeyBERT(model="paraphrase-multilingual-MiniLM-L12-v2")
+
     # jieba initials
-    my_dict = []
+    weighted_dict = []
+    with open(
+        DICT_FILE,
+        "r",
+        encoding="utf-8",
+        newline="",
+    ) as jsonfile:
+        data = json.load(jsonfile)
 
-    for my_word in get_my_dict(TRAIN_DICT_FILE):
-        jieba.add_word(my_word, 4)  # add weight to self-dict
-        my_dict.append(my_word)
-    for my_word in get_my_dict(TEST_DICT_FILE):
-        jieba.add_word(my_word, 4)  # add weight to self-dict
-        my_dict.append(my_word)
-
+        for f in data:  # level_1 equals to "train" or "test" file
+            for key in data[f]:  # level_2 equals to "O", "Name", "Labor"
+                if (
+                    key == "Labor"
+                ):  # remove "O", "00", "Name" to enhance weight of "Labor"，
+                    for my_word in data[f][key]:
+                        jieba.add_word(my_word, 4)  # add weight to self-dict
+                        weighted_dict.append(my_word)
+                elif key not in {"O", "OO"}:  # "General", "Name"
+                    for my_word in data[f][key]:
+                        jieba.add_word(my_word, 4)  # add weight to self-dict
     print("jieba load dict done!")
 
     # deal with data
@@ -57,18 +78,17 @@ if __name__ == '__main__':
 
         # ketBert: take keyword after tokenization
         text = " ".join(list(jieba.cut(text)))
-        keywords = kb.extract_keywords(text, stop_words=stopwords, top_n=50, diversity=0.2, use_mmr=True)
+        keywords = kb.extract_keywords(
+            text, stop_words=stopwords, top_n=50, diversity=0.2, use_mmr=True
+        )
 
         new_keywords = []
-
         for keyword in keywords:
-            if keyword[0] in my_dict:
-                new_keywords.append((keyword[1]*MY_KEYWORD_WEIGHT, keyword[0]))
+            if keyword[0] in weighted_dict:
+                new_keywords.append((keyword[1] * MY_KEYWORD_WEIGHT, keyword[0]))
             else:
                 new_keywords.append((keyword[1], keyword[0]))
-
         new_keywords.sort(reverse=True)
-
         predict["keywords"].append([keyword[1] for keyword in new_keywords[:10]])
 
         succ_counter += 1
@@ -79,5 +99,3 @@ if __name__ == '__main__':
 
     print(f"Total: {succ_counter}")
     print("succeed!")
-
-

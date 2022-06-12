@@ -1,16 +1,26 @@
-FILE_TYPE = "test"
+import json
 
-if __name__ == '__main__':
-    file_loc = f"./{FILE_TYPE}_annotated.txt"
-    out_file = f"./{FILE_TYPE}_dict.txt"
+def load_dict(data_type):
+    tmp_dict = {}
 
-    my_dict = []
-    for line in open(file_loc, 'r', encoding='utf-8'):
-        line = line.split('\n')[0].split(' ')
-        if (line[-1] != "O"):
-            my_dict.append(line[0])
+    for line in open(f"./{data_type}_annotated.txt", "r", encoding="utf-8"):
+        line = line.split("\n")[0].split(" ")
 
-    with open(out_file, 'w', encoding='utf-8') as f:
-        for word in my_dict:
-            print(word , file=f)
+        if line[1] not in tmp_dict:
+            tmp_dict[line[1]] = []
 
+        tmp_dict[line[1]].append(line[0])
+
+    return tmp_dict
+
+
+if __name__ == "__main__":
+    my_dict = {}
+
+    my_dict["train"] = load_dict("train")
+    my_dict["test"] = load_dict("test")
+
+    with open("./my_dict.json", "w", encoding="utf-8") as f:
+        json.dump(my_dict, fp=f, ensure_ascii=False)
+
+    print("done!")
