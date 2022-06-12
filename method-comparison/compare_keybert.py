@@ -13,6 +13,6 @@ if __name__ == '__main__':
     df1.drop(df1.columns[0], inplace=True, axis=1)
     df1['keyword_with_our_strategy'] = df2[df2.columns[3]]
 
-    Path("./result").mkdir(parents=True, exist_ok=True)
-    df1.to_csv(f"./result/{CATE}.csv")
+    Path("./compare_result").mkdir(parents=True, exist_ok=True)
+    df1.to_csv(f"./compare_result/{CATE}.csv")
     print("done!")
