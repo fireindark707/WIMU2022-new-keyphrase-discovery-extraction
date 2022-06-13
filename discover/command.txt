@@ -1,0 +1,3 @@
+%run run_discover.py 'test.csv' --latin 5 0 0 0 --bigram 5 60 1.5 0.5 --unigram_2 5 20 0 0.5 --unigram_3 5 20 0 0.5 --iteration 1 --verbose 2
+
+%run run_discover.py 'train.csv' --latin 5 0 0 0 --bigram 5 60 1.5 0.5 --unigram_2 5 20 0 0.5 --unigram_3 5 20 0 0.5 --iteration 1 --verbose 2
